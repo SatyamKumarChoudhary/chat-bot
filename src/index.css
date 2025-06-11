@@ -2,11 +2,11 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
+  
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
-
+  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -65,4 +65,51 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Robot Avatar Styles - Added Below */
+.robot-avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.robot-avatar {
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.robot-avatar.processing {
+  box-shadow: 0 0 20px rgba(0, 255, 100, 0.5);
+}
+
+.robot-avatar.talking {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(0, 150, 255, 0.6);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.robot-fallback {
+  font-size: 60px;
+}
+
+.status-indicator {
+  margin-top: 10px;
+}
+
+.status-text {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
 }

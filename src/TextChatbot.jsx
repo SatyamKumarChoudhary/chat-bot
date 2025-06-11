@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Phone, User, MessageCircle, Volume2 } from 'lucide-react';
-import VoiceInput from './VoiceInput'; // Import the voice component
+import VoiceInput from './VoiceInput';
 
-const Chatbot = () => {
+const TextChatbot = () => {
   // Enhanced customer database with ID numbers
   const customerDatabase = [
     { phone: "1234567890", name: "John Smith", id: "CUST001", idNumber: "A12345678" },
@@ -34,12 +34,10 @@ const Chatbot = () => {
   ]);
   
   const [inputText, setInputText] = useState('');
-  const [authStep, setAuthStep] = useState('id'); // 'id', 'phone', 'authenticated', 'failed'
+  const [authStep, setAuthStep] = useState('id');
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [enteredId, setEnteredId] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
-  // Voice-related states
   const [voiceStatus, setVoiceStatus] = useState({ type: 'idle', message: '' });
   
   const messagesEndRef = useRef(null);
@@ -64,15 +62,14 @@ const Chatbot = () => {
 
   const simulateTyping = () => {
     setIsTyping(true);
-    setTimeout(() => setIsTyping(false), 1000);
+    setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
   };
 
   // Voice Input Handlers
   const handleVoiceTranscription = (transcribedText) => {
-    // Set the transcribed text to input field
     setInputText(transcribedText);
-    
-    // Auto-submit if it looks like a complete response
     if (transcribedText.length > 3) {
       setTimeout(() => {
         handleTextSubmission(transcribedText);
@@ -82,8 +79,6 @@ const Chatbot = () => {
 
   const handleVoiceStatusUpdate = (type, message) => {
     setVoiceStatus({ type, message });
-    
-    // Add voice status messages to chat (except idle messages)
     if (message && type !== 'idle' && message.trim()) {
       addMessage(message, 'bot');
     }
@@ -97,7 +92,6 @@ const Chatbot = () => {
     if (customer) {
       setEnteredId(cleanId);
       setAuthStep('phone');
-      
       simulateTyping();
       setTimeout(() => {
         addMessage("✅ ID verified successfully!", 'bot');
@@ -126,7 +120,6 @@ const Chatbot = () => {
     if (customer) {
       setCurrentCustomer(customer);
       setAuthStep('authenticated');
-      
       simulateTyping();
       setTimeout(() => {
         addMessage(`🎉 Authentication successful! Welcome back, ${customer.name}!`, 'bot');
@@ -441,7 +434,6 @@ const Chatbot = () => {
     }
   };
 
-  // Determine if voice should be disabled based on current state
   const isVoiceDisabled = authStep === 'failed' || isTyping;
 
   return (
@@ -455,8 +447,8 @@ const Chatbot = () => {
               <MessageCircle size={24} />
             </div>
             <div>
-              <h1 style={styles.title}>SatyamBot</h1>
-              <p style={styles.subtitle}>Maybank AI Assistant • 24/7 Support • Voice Enabled</p>
+              <h1 style={styles.title}>SatyamBot - Text Mode</h1>
+              <p style={styles.subtitle}>Maybank AI Assistant • Text Chat • Voice Input Available</p>
             </div>
           </div>
           <div style={styles.brandTag}>
@@ -720,4 +712,4 @@ const Chatbot = () => {
   );
 };
 
-export default Chatbot;
+export default TextChatbot;
