@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Phone, User, MessageCircle, Volume2 } from 'lucide-react';
-import VoiceInput from './VoiceInput';
+import { Send, User, MessageCircle, Bot, Shield, Sparkles } from 'lucide-react';
 
 const TextChatbot = () => {
   // Enhanced customer database with ID numbers
@@ -15,19 +14,13 @@ const TextChatbot = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "🏦 Hello! Welcome to Maybank Customer Care. I'm SatyamBot, your intelligent AI assistant.",
+      text: "🏦 Hello! Welcome to Maybank Customer Care.",
       sender: 'bot',
       timestamp: new Date()
     },
     {
       id: 2,
-      text: "For your security and privacy, I need to verify your identity with a 2-step authentication process.",
-      sender: 'bot',
-      timestamp: new Date()
-    },
-    {
-      id: 3,
-      text: "Step 1: Please enter your National ID / Passport Number (or click the microphone to speak):",
+      text: "I'm SatyamBot, your intelligent AI assistant. Please enter your National ID / Passport Number to get started:",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -36,9 +29,7 @@ const TextChatbot = () => {
   const [inputText, setInputText] = useState('');
   const [authStep, setAuthStep] = useState('id');
   const [currentCustomer, setCurrentCustomer] = useState(null);
-  const [enteredId, setEnteredId] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState({ type: 'idle', message: '' });
   
   const messagesEndRef = useRef(null);
 
@@ -67,74 +58,29 @@ const TextChatbot = () => {
     }, 1000);
   };
 
-  // Voice Input Handlers
-  const handleVoiceTranscription = (transcribedText) => {
-    setInputText(transcribedText);
-    if (transcribedText.length > 3) {
-      setTimeout(() => {
-        handleTextSubmission(transcribedText);
-      }, 1000);
-    }
-  };
-
-  const handleVoiceStatusUpdate = (type, message) => {
-    setVoiceStatus({ type, message });
-    if (message && type !== 'idle' && message.trim()) {
-      addMessage(message, 'bot');
-    }
-  };
-
-  // Authentication functions
-  const authenticateStep1 = (idNumber) => {
+  // Single-step authentication
+  const authenticate = (idNumber) => {
     const cleanId = idNumber.replace(/\s/g, '').toUpperCase();
     const customer = customerDatabase.find(c => c.idNumber === cleanId);
-    
-    if (customer) {
-      setEnteredId(cleanId);
-      setAuthStep('phone');
-      simulateTyping();
-      setTimeout(() => {
-        addMessage("✅ ID verified successfully!", 'bot');
-        setTimeout(() => {
-          addMessage("Step 2: Please enter your registered mobile number (or use voice input):", 'bot');
-        }, 1000);
-      }, 1000);
-    } else {
-      setAuthStep('failed');
-      simulateTyping();
-      setTimeout(() => {
-        addMessage("🚫 ID verification failed. The ID number you entered is not found in our Maybank records.", 'bot');
-        setTimeout(() => {
-          addMessage("For security reasons, please visit your nearest Maybank branch with valid ID or call our customer service hotline at 1-300-88-6688. Thank you!", 'bot');
-        }, 2000);
-      }, 1000);
-    }
-  };
-
-  const authenticateStep2 = (phoneNumber) => {
-    const cleanPhone = phoneNumber.replace(/\D/g, '');
-    const customer = customerDatabase.find(c => 
-      c.idNumber === enteredId && c.phone === cleanPhone
-    );
     
     if (customer) {
       setCurrentCustomer(customer);
       setAuthStep('authenticated');
       simulateTyping();
       setTimeout(() => {
-        addMessage(`🎉 Authentication successful! Welcome back, ${customer.name}!`, 'bot');
+        addMessage(`✨ Welcome back, ${customer.name}!`, 'bot');
         setTimeout(() => {
-          addMessage("I'm SatyamBot, your personal Maybank assistant. You can now type your questions or use voice input by clicking the microphone. How can I help you today?", 'bot');
-        }, 1500);
+          addMessage("Your account is now verified. How can I assist you today with your banking needs?", 'bot');
+        }, 1200);
       }, 1000);
     } else {
       setAuthStep('failed');
       simulateTyping();
       setTimeout(() => {
-        addMessage("🚫 Phone verification failed. The mobile number doesn't match with the provided ID.", 'bot');
+        addMessage("⚠️ ID verification failed. The ID number entered is not found in our records.", 'bot');
         setTimeout(() => {
-          addMessage("Please ensure you're using the correct mobile number registered with your account. Contact Maybank at 1-300-88-6688 for assistance.", 'bot');
-        }, 2000);
+          addMessage("Please visit your nearest Maybank branch or call 1-300-88-6688 for assistance.", 'bot');
+        }, 1500);
       }, 1000);
     }
   };
@@ -165,21 +111,11 @@ const TextChatbot = () => {
 
     } catch (error) {
       console.error('Error calling API:', error);
-      const fallbackResponse = `Hello ${currentCustomer.name}, I'm experiencing technical difficulties. Please try again in a moment or contact Maybank at 1-300-88-6688 for immediate assistance.`;
+      const fallbackResponse = `I apologize, ${currentCustomer.name}. I'm experiencing technical difficulties. Please try again or contact Maybank at 1-300-88-6688.`;
       
       setTimeout(() => {
         addMessage(fallbackResponse, 'bot');
       }, 1000);
-    }
-  };
-
-  const handleTextSubmission = async (text) => {
-    if (authStep === 'id') {
-      authenticateStep1(text);
-    } else if (authStep === 'phone') {
-      authenticateStep2(text);
-    } else if (authStep === 'authenticated') {
-      await handleQuery(text);
     }
   };
 
@@ -190,7 +126,11 @@ const TextChatbot = () => {
     const userInput = inputText;
     setInputText('');
 
-    await handleTextSubmission(userInput);
+    if (authStep === 'id') {
+      authenticate(userInput);
+    } else if (authStep === 'authenticated') {
+      await handleQuery(userInput);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -199,114 +139,113 @@ const TextChatbot = () => {
     }
   };
 
-  // Styles
+  // Modern styles with glassmorphism and gradients
   const styles = {
-    container: {
+    wrapper: {
       display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      maxWidth: '900px',
-      margin: '0 auto',
-      backgroundColor: '#f8fafc',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      boxShadow: '0 0 30px rgba(0,0,0,0.1)'
-    },
-    header: {
-      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 30%, #60a5fa 70%, #93c5fd 100%)',
-      color: 'white',
-      padding: '24px 28px',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px',
       position: 'relative',
       overflow: 'hidden'
     },
-    headerBg: {
+    backgroundPattern: {
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-      opacity: 0.4
+      opacity: 0.1,
+      background: `
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%)
+      `
+    },
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '85vh',
+      width: '100%',
+      maxWidth: '800px',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backdropFilter: 'blur(20px)',
+      borderRadius: '24px',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      overflow: 'hidden',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      position: 'relative'
+    },
+    header: {
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      padding: '24px 30px',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+      position: 'relative'
     },
     headerContent: {
       display: 'flex',
       alignItems: 'center',
-      gap: '16px',
-      position: 'relative',
-      zIndex: 1
+      justifyContent: 'space-between'
     },
     logoArea: {
       display: 'flex',
       alignItems: 'center',
-      gap: '12px'
+      gap: '16px'
     },
     logo: {
-      width: '52px',
-      height: '52px',
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15))',
+      width: '48px',
+      height: '48px',
+      background: 'rgba(255, 255, 255, 0.2)',
       borderRadius: '16px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255,255,255,0.2)',
-      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.3)'
+    },
+    titleSection: {
+      flex: 1
     },
     title: {
-      fontSize: '26px',
-      fontWeight: '800',
+      fontSize: '24px',
+      fontWeight: '700',
       margin: 0,
-      letterSpacing: '-0.8px',
-      textShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      letterSpacing: '-0.5px'
     },
     subtitle: {
-      color: 'rgba(255,255,255,0.95)',
-      fontSize: '15px',
-      margin: 0,
-      fontWeight: '500',
-      textShadow: '0 1px 5px rgba(0,0,0,0.1)'
+      fontSize: '14px',
+      opacity: 0.9,
+      margin: '4px 0 0 0',
+      fontWeight: '400'
     },
     brandTag: {
-      fontSize: '13px',
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
-      padding: '6px 16px',
-      borderRadius: '25px',
-      marginLeft: 'auto',
-      fontWeight: '600',
-      backdropFilter: 'blur(15px)',
-      border: '1px solid rgba(255,255,255,0.15)',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '12px',
+      background: 'rgba(255, 255, 255, 0.2)',
+      padding: '8px 16px',
+      borderRadius: '20px',
+      fontWeight: '500',
+      border: '1px solid rgba(255, 255, 255, 0.3)'
     },
     statusBar: {
-      backgroundColor: 'white',
+      backgroundColor: '#f8fafc',
       borderBottom: '1px solid #e2e8f0',
-      padding: '16px 24px',
-      background: 'linear-gradient(90deg, #ffffff 0%, #f8fafc 100%)'
-    },
-    statusContent: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px'
+      padding: '12px 24px'
     },
     statusBadge: {
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
       gap: '8px',
       padding: '8px 16px',
-      borderRadius: '25px',
+      borderRadius: '20px',
       fontSize: '13px',
       fontWeight: '500',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-    },
-    voiceIndicator: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '8px 16px',
-      borderRadius: '25px',
-      fontSize: '13px',
-      fontWeight: '500',
-      marginLeft: 'auto'
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
     },
     messagesArea: {
       flex: 1,
@@ -314,11 +253,13 @@ const TextChatbot = () => {
       padding: '24px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '20px',
-      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
+      gap: '16px',
+      background: '#fafbfc'
     },
     messageContainer: {
-      display: 'flex'
+      display: 'flex',
+      alignItems: 'flex-end',
+      gap: '8px'
     },
     userMessageContainer: {
       justifyContent: 'flex-end'
@@ -326,79 +267,98 @@ const TextChatbot = () => {
     botMessageContainer: {
       justifyContent: 'flex-start'
     },
+    avatar: {
+      width: '36px',
+      height: '36px',
+      borderRadius: '12px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '14px',
+      fontWeight: '600',
+      color: 'white',
+      flexShrink: 0
+    },
+    botAvatar: {
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+    },
+    userAvatar: {
+      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      boxShadow: '0 4px 12px rgba(245, 87, 108, 0.3)'
+    },
     message: {
-      maxWidth: '75%',
-      padding: '16px 20px',
-      borderRadius: '20px',
-      fontSize: '15px',
-      lineHeight: '1.4',
-      position: 'relative',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      maxWidth: '70%',
+      padding: '14px 18px',
+      borderRadius: '18px',
+      fontSize: '14px',
+      lineHeight: '1.5',
+      position: 'relative'
     },
     userMessage: {
-      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       color: 'white',
-      borderBottomRightRadius: '8px'
+      borderBottomRightRadius: '6px',
+      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
     },
     botMessage: {
       backgroundColor: 'white',
       border: '1px solid #e2e8f0',
-      borderBottomLeftRadius: '8px',
-      color: '#1e293b'
+      borderBottomLeftRadius: '6px',
+      color: '#1e293b',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
     },
     timestamp: {
       fontSize: '11px',
-      marginTop: '6px',
-      opacity: 0.8,
-      fontWeight: '400'
+      marginTop: '4px',
+      opacity: 0.7
     },
     inputArea: {
       backgroundColor: 'white',
       borderTop: '1px solid #e2e8f0',
-      padding: '20px 24px',
-      background: 'linear-gradient(90deg, #ffffff 0%, #f8fafc 100%)'
+      padding: '20px',
+      background: 'linear-gradient(to bottom, #ffffff, #f8fafc)'
     },
     inputContainer: {
       display: 'flex',
       gap: '12px',
-      alignItems: 'flex-end'
+      alignItems: 'center'
     },
     input: {
       flex: 1,
       border: '2px solid #e2e8f0',
-      borderRadius: '25px',
-      padding: '14px 20px',
-      fontSize: '15px',
+      borderRadius: '24px',
+      padding: '12px 20px',
+      fontSize: '14px',
       outline: 'none',
       transition: 'all 0.3s ease',
       backgroundColor: '#fafbfc'
     },
     sendButton: {
-      background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       color: 'white',
       border: 'none',
-      borderRadius: '25px',
-      padding: '14px 24px',
+      borderRadius: '24px',
+      width: '48px',
+      height: '48px',
       cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
+      justifyContent: 'center',
       transition: 'all 0.3s ease',
-      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
     },
     demoData: {
-      marginTop: '16px',
-      padding: '16px',
+      marginTop: '12px',
+      padding: '12px',
       backgroundColor: '#f1f5f9',
       borderRadius: '12px',
       border: '1px solid #e2e8f0'
     },
     demoButton: {
       fontSize: '12px',
-      backgroundColor: 'white',
-      border: '1px solid #cbd5e1',
+      background: 'white',
+      border: '1px solid #e2e8f0',
       borderRadius: '8px',
       padding: '6px 12px',
       margin: '4px',
@@ -408,58 +368,49 @@ const TextChatbot = () => {
     },
     typingIndicator: {
       display: 'flex',
-      gap: '6px',
-      padding: '16px 20px',
+      gap: '4px',
+      padding: '14px 18px',
       backgroundColor: 'white',
       border: '1px solid #e2e8f0',
-      borderRadius: '20px',
-      borderBottomLeftRadius: '8px',
-      maxWidth: '80px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+      borderRadius: '18px',
+      borderBottomLeftRadius: '6px',
+      width: 'fit-content',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
     },
     typingDot: {
       width: '8px',
       height: '8px',
-      backgroundColor: '#94a3b8',
+      backgroundColor: '#667eea',
       borderRadius: '50%',
-      animation: 'bounce 1.4s infinite ease-in-out'
-    },
-    poweredBy: {
-      textAlign: 'center',
-      padding: '12px',
-      fontSize: '11px',
-      color: '#64748b',
-      backgroundColor: '#f8fafc',
-      borderTop: '1px solid #e2e8f0'
+      animation: 'typing 1.4s infinite ease-in-out'
     }
   };
 
-  const isVoiceDisabled = authStep === 'failed' || isTyping;
-
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerBg}></div>
-        <div style={styles.headerContent}>
-          <div style={styles.logoArea}>
-            <div style={styles.logo}>
-              <MessageCircle size={24} />
+    <div style={styles.wrapper}>
+      <div style={styles.backgroundPattern}></div>
+      <div style={styles.container}>
+        {/* Header */}
+        <div style={styles.header}>
+          <div style={styles.headerContent}>
+            <div style={styles.logoArea}>
+              <div style={styles.logo}>
+                <Bot size={28} />
+              </div>
+              <div style={styles.titleSection}>
+                <h1 style={styles.title}>SatyamBot</h1>
+                <p style={styles.subtitle}>Maybank AI Assistant</p>
+              </div>
             </div>
-            <div>
-              <h1 style={styles.title}>SatyamBot - Text Mode</h1>
-              <p style={styles.subtitle}>Maybank AI Assistant • Text Chat • Voice Input Available</p>
+            <div style={styles.brandTag}>
+              <Sparkles size={14} />
+              <span>Powered by AWS</span>
             </div>
-          </div>
-          <div style={styles.brandTag}>
-            Powered by Maybank + AWS
           </div>
         </div>
-      </div>
 
-      {/* Status Bar */}
-      <div style={styles.statusBar}>
-        <div style={styles.statusContent}>
+        {/* Status Bar */}
+        <div style={styles.statusBar}>
           {authStep === 'id' && (
             <div style={{
               ...styles.statusBadge,
@@ -467,19 +418,8 @@ const TextChatbot = () => {
               color: '#92400e',
               border: '1px solid #f59e0b'
             }}>
-              <Phone size={16} />
-              <span>🔐 Step 1: ID Verification Required</span>
-            </div>
-          )}
-          {authStep === 'phone' && (
-            <div style={{
-              ...styles.statusBadge,
-              background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-              color: '#1e40af',
-              border: '1px solid #3b82f6'
-            }}>
-              <Phone size={16} />
-              <span>📱 Step 2: Phone Verification Required</span>
+              <Shield size={14} />
+              <span>ID Verification Required</span>
             </div>
           )}
           {authStep === 'authenticated' && (
@@ -489,10 +429,8 @@ const TextChatbot = () => {
               color: '#065f46',
               border: '1px solid #10b981'
             }}>
-              <User size={16} />
-              <span>
-                ✅ Authenticated: {currentCustomer?.name} • ID: {currentCustomer?.id}
-              </span>
+              <User size={14} />
+              <span>Verified: {currentCustomer?.name}</span>
             </div>
           )}
           {authStep === 'failed' && (
@@ -502,210 +440,154 @@ const TextChatbot = () => {
               color: '#991b1b',
               border: '1px solid #ef4444'
             }}>
-              <User size={16} />
-              <span>❌ Authentication Failed - Contact Support</span>
-            </div>
-          )}
-          
-          {/* Voice Status Indicator */}
-          {voiceStatus.type !== 'idle' && (
-            <div style={{
-              ...styles.voiceIndicator,
-              background: voiceStatus.type === 'recording' || voiceStatus.type === 'listening'
-                ? 'linear-gradient(135deg, #fee2e2, #fecaca)' 
-                : voiceStatus.type === 'processing'
-                ? 'linear-gradient(135deg, #fef3c7, #fde68a)'
-                : voiceStatus.type === 'success'
-                ? 'linear-gradient(135deg, #d1fae5, #a7f3d0)'
-                : 'linear-gradient(135deg, #fee2e2, #fecaca)',
-              color: voiceStatus.type === 'recording' || voiceStatus.type === 'listening' || voiceStatus.type === 'error'
-                ? '#991b1b' 
-                : voiceStatus.type === 'processing'
-                ? '#92400e'
-                : '#065f46',
-              border: voiceStatus.type === 'recording' || voiceStatus.type === 'listening' || voiceStatus.type === 'error'
-                ? '1px solid #ef4444'
-                : voiceStatus.type === 'processing'
-                ? '1px solid #f59e0b'
-                : '1px solid #10b981'
-            }}>
-              <Volume2 size={16} />
-              <span>
-                {voiceStatus.type === 'recording' && '🎤 Recording...'}
-                {voiceStatus.type === 'listening' && '🎤 Listening...'}
-                {voiceStatus.type === 'processing' && '🔄 Processing...'}
-                {voiceStatus.type === 'success' && '✅ Voice Ready'}
-                {voiceStatus.type === 'error' && '❌ Voice Error'}
-              </span>
+              <Shield size={14} />
+              <span>Verification Failed</span>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Messages */}
-      <div style={styles.messagesArea}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            style={{
-              ...styles.messageContainer,
-              ...(message.sender === 'user' ? styles.userMessageContainer : styles.botMessageContainer)
-            }}
-          >
+        {/* Messages */}
+        <div style={styles.messagesArea}>
+          {messages.map((message) => (
             <div
+              key={message.id}
               style={{
-                ...styles.message,
-                ...(message.sender === 'user' ? styles.userMessage : styles.botMessage)
+                ...styles.messageContainer,
+                ...(message.sender === 'user' ? styles.userMessageContainer : styles.botMessageContainer)
               }}
             >
-              <p style={{margin: 0}}>{message.text}</p>
-              <p style={{
-                ...styles.timestamp,
-                color: message.sender === 'user' ? '#bfdbfe' : '#6b7280'
-              }}>
-                {message.timestamp.toLocaleTimeString()}
-              </p>
+              {message.sender === 'bot' && (
+                <div style={{...styles.avatar, ...styles.botAvatar}}>AI</div>
+              )}
+              <div
+                style={{
+                  ...styles.message,
+                  ...(message.sender === 'user' ? styles.userMessage : styles.botMessage)
+                }}
+              >
+                <p style={{margin: 0}}>{message.text}</p>
+                <p style={{
+                  ...styles.timestamp,
+                  color: message.sender === 'user' ? 'rgba(255,255,255,0.8)' : '#64748b'
+                }}>
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {message.sender === 'user' && (
+                <div style={{...styles.avatar, ...styles.userAvatar}}>
+                  {currentCustomer ? currentCustomer.name.split(' ').map(n => n[0]).join('') : 'U'}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
-        
-        {isTyping && (
-          <div style={styles.botMessageContainer}>
-            <div style={styles.typingIndicator}>
-              <div style={styles.typingDot}></div>
-              <div style={{...styles.typingDot, animationDelay: '0.2s'}}></div>
-              <div style={{...styles.typingDot, animationDelay: '0.4s'}}></div>
+          ))}
+          
+          {isTyping && (
+            <div style={styles.botMessageContainer}>
+              <div style={{...styles.avatar, ...styles.botAvatar}}>AI</div>
+              <div style={styles.typingIndicator}>
+                <div style={styles.typingDot}></div>
+                <div style={{...styles.typingDot, animationDelay: '0.2s'}}></div>
+                <div style={{...styles.typingDot, animationDelay: '0.4s'}}></div>
+              </div>
             </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        {authStep !== 'failed' && (
+          <div style={styles.inputArea}>
+            <div style={styles.inputContainer}>
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={
+                  authStep === 'id' 
+                    ? "Enter your National ID / Passport Number..." 
+                    : "Type your message..."
+                }
+                style={{
+                  ...styles.input,
+                  borderColor: inputText ? '#667eea' : '#e2e8f0'
+                }}
+              />
+              
+              <button 
+                onClick={handleSend} 
+                style={{
+                  ...styles.sendButton,
+                  opacity: inputText ? 1 : 0.6,
+                  transform: inputText ? 'scale(1)' : 'scale(0.95)'
+                }}
+                disabled={!inputText.trim()}
+              >
+                <Send size={20} />
+              </button>
+            </div>
+            
+            {authStep === 'id' && (
+              <div style={styles.demoData}>
+                <p style={{fontSize: '12px', color: '#64748b', margin: '0 0 8px 0', fontWeight: '500'}}>
+                  Quick login - Click to use demo ID:
+                </p>
+                <div style={{display: 'flex', flexWrap: 'wrap'}}>
+                  {customerDatabase.map(customer => (
+                    <button
+                      key={customer.idNumber}
+                      onClick={() => setInputText(customer.idNumber)}
+                      style={styles.demoButton}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#f1f5f9';
+                        e.target.style.borderColor = '#667eea';
+                        e.target.style.color = '#667eea';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = 'white';
+                        e.target.style.borderColor = '#e2e8f0';
+                        e.target.style.color = '#475569';
+                      }}
+                    >
+                      {customer.name} ({customer.idNumber})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      {authStep !== 'failed' && (
-        <div style={styles.inputArea}>
-          <div style={styles.inputContainer}>
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={
-                authStep === 'id' 
-                  ? "Enter your National ID / Passport Number..." 
-                  : authStep === 'phone'
-                  ? "Enter your registered mobile number..."
-                  : "Ask me anything about your account..."
-              }
-              style={{
-                ...styles.input,
-                borderColor: inputText ? '#3b82f6' : '#e2e8f0'
-              }}
-              disabled={voiceStatus.type === 'recording' || voiceStatus.type === 'processing'}
-            />
-            
-            {/* Voice Input Component */}
-            <VoiceInput
-              onTranscriptionComplete={handleVoiceTranscription}
-              onStatusUpdate={handleVoiceStatusUpdate}
-              disabled={isVoiceDisabled}
-              placeholder={
-                authStep === 'id' 
-                  ? "Click to speak your ID number" 
-                  : authStep === 'phone'
-                  ? "Click to speak your phone number"
-                  : "Click to speak your question"
-              }
-            />
-            
-            <button 
-              onClick={handleSend} 
-              style={{
-                ...styles.sendButton,
-                transform: inputText ? 'scale(1.02)' : 'scale(1)',
-                opacity: inputText ? 1 : 0.7
-              }}
-              disabled={voiceStatus.type === 'recording' || voiceStatus.type === 'processing'}
-            >
-              <Send size={16} />
-              <span>Send</span>
-            </button>
-          </div>
-          
-          {authStep === 'id' && (
-            <div style={styles.demoData}>
-              <p style={{fontSize: '13px', color: '#475569', margin: '0 0 12px 0', fontWeight: '500'}}>
-                🆔 Demo Credentials - Try these ID Numbers (or speak them):
-              </p>
-              <div>
-                {customerDatabase.slice(0, 3).map(customer => (
-                  <button
-                    key={customer.idNumber}
-                    onClick={() => setInputText(customer.idNumber)}
-                    style={{
-                      ...styles.demoButton,
-                      ':hover': { backgroundColor: '#f1f5f9', borderColor: '#3b82f6' }
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#f1f5f9';
-                      e.target.style.borderColor = '#3b82f6';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#cbd5e1';
-                    }}
-                  >
-                    🆔 {customer.idNumber} ({customer.name})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {authStep === 'phone' && (
-            <div style={styles.demoData}>
-              <p style={{fontSize: '13px', color: '#475569', margin: '0 0 12px 0', fontWeight: '500'}}>
-                📱 Demo Credentials - Try these Mobile Numbers (or speak them):
-              </p>
-              <div>
-                {customerDatabase.filter(c => c.idNumber === enteredId).map(customer => (
-                  <button
-                    key={customer.phone}
-                    onClick={() => setInputText(customer.phone)}
-                    style={{
-                      ...styles.demoButton,
-                      ':hover': { backgroundColor: '#f1f5f9', borderColor: '#3b82f6' }
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#f1f5f9';
-                      e.target.style.borderColor = '#3b82f6';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = 'white';
-                      e.target.style.borderColor = '#cbd5e1';
-                    }}
-                  >
-                    📱 {customer.phone} ({customer.name})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Powered By Footer */}
-      <div style={styles.poweredBy}>
-        🔒 Secured by Maybank • Voice Powered by AWS Transcribe • Your data is protected with bank-grade encryption
-      </div>
-
-      <style jsx>{`
-        @keyframes bounce {
+      <style>{`
+        @keyframes typing {
           0%, 80%, 100% {
             transform: scale(0);
-          } 40% {
-            transform: scale(1);
+            opacity: 0.5;
           }
+          40% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        /* Custom scrollbar */
+        div::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        div::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+        
+        div::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+        
+        div::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
       `}</style>
     </div>
